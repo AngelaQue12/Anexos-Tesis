@@ -1,99 +1,128 @@
 clc; clear;
 
-%% MATRIZ DE ADYACENCIA DIRIGIDA (8 nodos)
-% A = [
-%     0 1 1 0 0 0 0 0;  % 1 -> {2,3}
-%     1 0 1 0 0 1 0 0;  % 2 -> {1,3,6}
-%     1 1 0 1 0 1 1 1;  % 3 -> {1,2,4,6,7,8}
-%     0 0 1 0 1 0 0 1;  % 4 -> {3,5,8}
-%     0 0 0 1 0 0 0 1;  % 5 -> {4,8}
-%     0 1 1 0 0 0 1 0;  % 6 -> {2,3,7}
-%     0 0 1 0 0 1 0 1;  % 7 -> {3,6,8}
-%     0 0 1 1 1 0 1 0   % 8 -> {3,4,5,7}
-% ];
+%% ================== 1) MATRIZ DE INCIDENCIA DIRIGIDA ====================
+% Convención: -1 en ORIGEN, +1 en DESTINO, 0 en el resto (filas=nodos, cols=arcos).
+% Ejemplo: ajusta B a tu caso real
 
-A = [
-    0 1 1 0 0 0 0 0;  % 1 -> {2,3}
-    1 0 1 0 0 1 0 0;  % 2 -> {1,3,6}
-    1 1 0 1 0 0 1 0;  % 3 -> {1,2,4,7}
-    0 0 1 0 1 0 0 0;  % 4 -> {3,5}
-    0 0 0 1 0 0 0 1;  % 5 -> {4,8}
-    0 1 0 0 0 0 1 0;  % 6 -> {2,7}
-    0 0 1 0 0 1 0 1;  % 7 -> {3,6,8}
-    0 0 0 0 1 0 1 0   % 8 -> {5,7}
-];
-n = size(A,1);
+B = [ ...
+   -1, +1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0, +1,  0;  % 1
+   +1,  0, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, +1, +1,  0,  0, +1;  % 2
+    0, -1, +1,  0, +1, -1,  0, +1, -1,  0,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0;  % 3
+    0,  0,  0,  0,  0,  0,  0,  0, +1, -1, +1,  0,  0,  0, -1,  0,  0,  0,  0,  0,  0;  % 4
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1, +1,  0, +1,  0,  0, -1,  0,  0, -1,  0;  % 5
+    0,  0,  0, +1, -1,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0, +1,  0,  0, +1,  0,  0;  % 6
+    0,  0,  0,  0,  0, +1, -1,  0,  0,  0,  0,  0, +1,  0, +1,  0,  0,  0,  0,  0, -1;  % 7
+    0,  0,  0,  0,  0,  0, +1, -1,  0, +1,  0, -1,  0,  0,  0,  0,  0, -1, -1,  0,  0]; % 8
 
-% (Solo para verificación)
-fprintf('Vecinos por nodo:\n');
-for i = 1:n
-    v = find(A(i,:)==1);
-    fprintf('Nodo %d: ', i); fprintf('%d ', v); fprintf('\n');
-end
+n = size(B,1);
 
-%% Grafo original
-G = digraph(A);
-
-% Posiciones utilizadas en el grafo no dirigido para comparar (se puede
-% quitar pero es para una mejor visualización)
+% Layout fijo como en los otros grafos para comparacion
+useFixedLayout = true;
 X = [ 0.00, -0.85,  0.10,  0.95,  1.25, -1.05, -0.60,  0.35 ];
 Y = [-1.05, -0.75, -0.30,  0.10,  0.70, -0.15,  0.45,  0.40 ];
 
-figure; clf
-plot(G,'XData',X,'YData',Y);  
-title('Grafo original sin eliminar nodos');
+%% ============= 2) Incidencia a aristas (s,t) y grafo dirigido ===========
+[s_all, t_all] = incidence_to_edges(B);              % 1..n
+labels = arrayfun(@num2str, 1:n, 'UniformOutput', false);
+G = digraph(s_all, t_all, [], labels);
 
-%% ¿Eliminar nodos?
-resp = input('\n¿Deseas eliminar nodos? (s/n): ','s');
-if lower(resp)=='s'
-    fprintf('\nEste grafo tiene %d nodos (1 a %d).\n', n, n);
-    nodos_quitar = input('Indica los nodos a eliminar como vector (ej. [2 5]): ');
-
-    % Reducir matriz
-    A(nodos_quitar,:) = [];
-    A(:,nodos_quitar) = [];
-
-    % Nodos restantes (mantener etiquetas originales)
-    nodos_restantes = setdiff(1:n, nodos_quitar);
-    etiquetas = arrayfun(@num2str, nodos_restantes, 'UniformOutput', false);
-
-    % Posiciones filtradas con el mismo layout
-    X_red = X(nodos_restantes);
-    Y_red = Y(nodos_restantes);
-
-    % Grafo reducido con mismo estilo/posiciones
-    G_red = digraph(A, etiquetas);
-    figure; clf
-    plot(G_red,'XData',X_red,'YData',Y_red);
-    title('Grafo después de eliminar nodos');
-    
-    % Actualizar n para la verificación
-    n = size(A,1);
-end
-
-%% Lista de adyacencia (matriz actual A)
-adjList = cell(1,n);
-for i = 1:n, adjList{i} = find(A(i,:)==1); end
-
-%% Verificación de fuerte conectividad (DFS)
-isStronglyConnected = true;
-for i = 1:n
-    visited = false(1,n);
-    stack = i; visited(i)=true;
-    while ~isempty(stack)
-        node = stack(end); stack(end)=[];
-        for neigh = adjList{node}
-            if ~visited(neigh)
-                stack(end+1)=neigh; visited(neigh)=true;
-            end
-        end
-    end
-    if any(~visited), isStronglyConnected=false; break; end
-end
-
-%% Resultado
-if isStronglyConnected
-    disp('El grafo es FUERTEMENTE CONEXO.');
+figure(1); clf
+if useFixedLayout && numel(X)==n && numel(Y)==n
+    plot(G, 'XData', X, 'YData', Y);
 else
-    disp('El grafo NO es fuertemente conexo.');
+    plot(G);
+end
+title('Grafo original (incidencia)');
+
+%% ============= 3) Pedir nodos a eliminar ================================
+fprintf('\nEste grafo tiene %d nodos (etiquetas 1..%d).\n', n, n);
+txt = input('Indica los nodos a eliminar como vector (ej. [2 5]) o [] para ninguno: ');
+if isempty(txt)
+    nodos_quitar = [];
+else
+    nodos_quitar = unique(txt(:)');   % limpio
+    if any(nodos_quitar < 1 | nodos_quitar > n)
+        error('Algún índice de nodo a eliminar está fuera de 1..%d', n);
+    end
+end
+
+keep = setdiff(1:n, nodos_quitar);
+if isempty(keep)
+    error('Eliminaste todos los nodos; no hay grafo que evaluar.');
+end
+
+% Filtrar aristas que se quedan completamente dentro de "keep"
+mask_keep_edges = ismember(s_all, keep) & ismember(t_all, keep);
+s_red = s_all(mask_keep_edges);
+t_red = t_all(mask_keep_edges);
+
+% Remapear a índices compactos para dibujar
+map = zeros(1,n); map(keep) = 1:numel(keep);
+s_plot = map(s_red);
+t_plot = map(t_red);
+etiquetas = arrayfun(@num2str, keep, 'UniformOutput', false);
+
+% Layout filtrado si lo estás usando
+if useFixedLayout && numel(X)>=max(keep) && numel(Y)>=max(keep)
+    X_red = X(keep); Y_red = Y(keep);
+else
+    X_red = []; Y_red = [];
+end
+
+% Construir y dibujar el grafo reducido
+G_red = digraph(s_plot, t_plot, [], etiquetas);
+figure(2); clf
+if ~isempty(X_red)
+    plot(G_red, 'XData', X_red, 'YData', Y_red);
+else
+    plot(G_red);
+end
+title(sprintf('Grafo tras eliminar nodos %s', mat2str(nodos_quitar)));
+
+%% ============= 4) Verificación de FUERTE CONECTIVIDAD ====================
+nr = numnodes(G_red);
+if nr == 1
+    % Si quieres EXCLUIR singleton, pon: isSC = false;
+    isSC = true; 
+elseif nr > 1
+    comp = conncomp(G_red, 'Type', 'strong');
+    isSC = (max(comp) == 1);
+else
+    isSC = false;
+end
+
+fprintf('\nSubgrafo: %d nodos, %d arcos.\n', nr, numedges(G_red));
+if isSC
+    disp('Resultado: El grafo es FUERTEMENTE CONEXO.');
+else
+    disp('Resultado: El grafo NO es fuertemente conexo.');
+end
+
+% (Opcional) imprime arcos del subgrafo con etiquetas originales
+[s_idx, t_idx] = findedge(G_red);
+if ~isempty(s_idx)
+    fprintf('Arcos (etiquetas originales):\n');
+    for k = 1:numel(s_idx)
+        fprintf('  %s -> %s\n', G_red.Nodes.Name{s_idx(k)}, G_red.Nodes.Name{t_idx(k)});
+    end
+else
+    fprintf('Sin arcos en el subgrafo.\n');
+end
+
+%% ======================= funciones locales =====================
+function [s, t] = incidence_to_edges(B)
+    % Cada columna debe tener exactamente un -1 (origen) y un +1 (destino)
+    [n, m] = size(B);
+    s = zeros(1,m); t = zeros(1,m);
+    k = 0;
+    for e = 1:m
+        src = find(B(:,e) == -1);
+        dst = find(B(:,e) == +1);
+        if numel(src)==1 && numel(dst)==1
+            k = k + 1;
+            s(k) = src; t(k) = dst;
+        end
+        % columnas con formato invalido se ignoran
+    end
+    s = s(1:k); t = t(1:k);
 end
