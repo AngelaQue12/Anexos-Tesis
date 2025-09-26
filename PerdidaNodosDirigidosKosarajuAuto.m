@@ -2,7 +2,6 @@ clc; clear;
 
 %% ================== 1) MATRIZ DE INCIDENCIA DIRIGIDA ====================
 % Convención: -1 en ORIGEN, +1 en DESTINO, 0 en el resto (filas=nodos, cols=arcos).
-% Ejemplo: ajusta B a tu caso real
 
 B = [ ...
    -1, +1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, -1,  0,  0,  0, +1,  0;  % 1
@@ -126,3 +125,4 @@ function [s, t] = incidence_to_edges(B)
     end
     s = s(1:k); t = t(1:k);
 end
+
