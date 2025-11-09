@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"name": "NodesBidirectionalCommunication",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"stdint.h": "c",
+			"comms.h": "c",
+			"esp_log.h": "c",
+			"types.h": "c",
+			"task.h": "c",
+			"test_latencia.h": "c",
+			"stdio.h": "c",
+			"freertos.h": "c"
+		}
+	}
+}
