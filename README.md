@@ -33,6 +33,7 @@ Script que permite evaluar el efecto de la pérdida de nodos sobre la conectivid
 El script  toma como entrada una matriz de adyacencia no dirigida y permite especificar los nodos a eliminar. A partir de la matriz resultante, calcula
 
 📈 Resultados experimentales
+
 ● resultados_SC_incendencia.xlsx
 Resultados del análisis del **grafo dirigido** para todos los casos de pérdida de nodos, indicando si la red resultante es fuertemente conexa o no en cada configuración.
 
